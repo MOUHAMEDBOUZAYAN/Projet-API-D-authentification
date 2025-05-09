@@ -9,11 +9,15 @@ const xss = require('xss-clean');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
-// const errorHandler = require('./middlewares/errorHandler');
+const errorHandler = require('./middlewares/errorHandler'); // Correction: import décommenté
 const connectDB = require('./config/database');
+const checkEnv = require('./config/env'); // Import de la vérification des variables d'environnement
 
 // Charger les variables d'environnement
 dotenv.config();
+
+// Vérifier les variables d'environnement
+checkEnv();
 
 // Connecter à la base de données
 connectDB();
