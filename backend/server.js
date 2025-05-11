@@ -9,7 +9,7 @@ const xss = require('xss-clean');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
-const errorHandler = require('./middlewares/errorHandler'); // Correction: import décommenté
+const errorHandler = require('./middlewares/errorHandler');
 const connectDB = require('./config/database');
 const checkEnv = require('./config/env'); // Import de la vérification des variables d'environnement
 
@@ -17,7 +17,9 @@ const checkEnv = require('./config/env'); // Import de la vérification des vari
 dotenv.config();
 
 // Vérifier les variables d'environnement
-checkEnv();
+if (typeof checkEnv === 'function') {
+  checkEnv();
+}
 
 // Connecter à la base de données
 connectDB();
@@ -31,6 +33,24 @@ app.use(cors(corsOptions));
 
 // Cookie parser
 app.use(cookieParser());
+
+// Parser du body
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Configuration des sessions
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'secret-key-for-development',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: parseInt(process.env.SESSION_EXPIRE) || 86400000 // 24 heures par défaut
+    }
+  })
+);
 
 // Middlewares de sécurité
 app.use(helmet()); // Sécuriser les en-têtes HTTP
@@ -51,34 +71,24 @@ app.use(hpp());
 // Middleware de journalisation
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 
-// Parser du body
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// Configuration des sessions
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      maxAge: parseInt(process.env.SESSION_EXPIRE) || 86400000 // 24 heures par défaut
-    }
-  })
-);
+// Route de base pour vérifier que l'API fonctionne
+app.get('/', (req, res) => {
+  res.json({ message: 'Bienvenue sur l\'API d\'authentification' });
+});
 
 // Routes API
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 
-// Route de base
-app.get('/', (req, res) => {
-  res.json({ message: 'Bienvenue sur l\'API d\'authentification' });
+// Route de gestion des erreurs 404 (route non trouvée)
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    error: `Route non trouvée: ${req.originalUrl}`
+  });
 });
 
-// Middleware de gestion des erreurs
+// Middleware de gestion des erreurs - doit être placé après les routes
 app.use(errorHandler);
 
 // Port d'écoute

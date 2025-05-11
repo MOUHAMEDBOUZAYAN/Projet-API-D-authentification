@@ -69,6 +69,7 @@ UserSchema.pre('save', async function (next) {
 
 // Méthode pour vérifier si le mot de passe correspond
 UserSchema.methods.matchPassword = async function (enteredPassword) {
+    if (!enteredPassword) return false;
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
@@ -76,8 +77,8 @@ UserSchema.methods.matchPassword = async function (enteredPassword) {
 UserSchema.methods.getSignedJwtToken = function () {
     return jwt.sign(
         { id: this._id, role: this.role },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE }
+        process.env.JWT_SECRET || 'secret-dev-jwt',
+        { expiresIn: process.env.JWT_EXPIRE || '30d' }
     );
 };
 
