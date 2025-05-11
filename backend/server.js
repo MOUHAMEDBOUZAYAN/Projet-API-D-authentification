@@ -4,14 +4,16 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const session = require('express-session');
 const cors = require('cors');
-const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
+// Suppression des middlewares problématiques
+// const mongoSanitize = require('express-mongo-sanitize');
+// const xss = require('xss-clean');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
 const errorHandler = require('./middlewares/errorHandler');
 const connectDB = require('./config/database');
-const checkEnv = require('./config/env'); // Import de la vérification des variables d'environnement
+const checkEnv = require('./config/env');
+const customSecurity = require('./middlewares/customSecurity'); // Notre middleware personnalisé
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -27,35 +29,48 @@ connectDB();
 // Créer l'application Express
 const app = express();
 
-// Configuration CORS
-const corsOptions = require('./config/cors');
-app.use(cors(corsOptions));
+// Parser du body - Ces middlewares doivent être parmi les premiers
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true }));
 
 // Cookie parser
 app.use(cookieParser());
 
-// Parser du body
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Configuration CORS
+const corsOptions = require('./config/cors');
+app.use(cors(corsOptions));
 
-// Configuration des sessions
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'secret-key-for-development',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      maxAge: parseInt(process.env.SESSION_EXPIRE) || 86400000 // 24 heures par défaut
-    }
-  })
-);
+// Configuration des sessions - uniquement si activé
+const useSession = process.env.USE_SESSION === 'true';
+if (useSession) {
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || 'secret-key-for-development',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: parseInt(process.env.SESSION_EXPIRE) || 86400000 // 24 heures par défaut
+      }
+    })
+  );
+  console.log('Sessions activées');
+} else {
+  console.log('Sessions désactivées');
+}
+
+// Middleware de journalisation
+app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 
 // Middlewares de sécurité
 app.use(helmet()); // Sécuriser les en-têtes HTTP
-app.use(mongoSanitize()); // Empêcher l'injection NoSQL
-app.use(xss()); // Nettoyer les entrées utilisateur pour prévenir XSS
+
+// Utiliser notre middleware personnalisé pour la sécurité
+app.use(customSecurity);
+
+// Prévenir la pollution des paramètres HTTP
+app.use(hpp());
 
 // Limiter les requêtes pour prévenir les attaques par force brute
 const limiter = rateLimit({
@@ -64,12 +79,6 @@ const limiter = rateLimit({
   message: 'Trop de requêtes depuis cette IP, veuillez réessayer après 10 minutes'
 });
 app.use('/api/auth', limiter);
-
-// Prévenir la pollution des paramètres HTTP
-app.use(hpp());
-
-// Middleware de journalisation
-app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 
 // Route de base pour vérifier que l'API fonctionne
 app.get('/', (req, res) => {

@@ -4,14 +4,19 @@
 const { body, validationResult } = require('express-validator');
 const ErrorResponse = require('../utils/errorResponse');
 
-// Traiter les résultats de validation
+// Traiter les résultats de validation - Version corrigée
 const validationMiddleware = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const errorMessages = errors.array().map(error => error.msg);
-    return next(new ErrorResponse(errorMessages.join(', '), 400));
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map(error => error.msg);
+      return next(new ErrorResponse(errorMessages.join(', '), 400));
+    }
+    next();
+  } catch (error) {
+    console.error('Erreur dans le middleware de validation:', error);
+    next(new ErrorResponse('Erreur de validation', 500));
   }
-  next();
 };
 
 // Règles de validation pour l'inscription
@@ -26,13 +31,16 @@ const registerValidationRules = [
     .trim()
     .notEmpty().withMessage('L\'email est requis')
     .isEmail().withMessage('Veuillez fournir un email valide')
-    .normalizeEmail(),
+    .normalizeEmail({ gmail_remove_dots: false }),  // Configuration plus sûre
   
   body('password')
     .notEmpty().withMessage('Le mot de passe est requis')
     .isLength({ min: 6 }).withMessage('Le mot de passe doit comporter au moins 6 caractères')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
-  
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre')
+];
+
+// Règles pour vérifier la confirmation du mot de passe séparément
+const passwordConfirmValidationRule = [
   body('passwordConfirm')
     .notEmpty().withMessage('La confirmation du mot de passe est requise')
     .custom((value, { req }) => {
@@ -43,13 +51,19 @@ const registerValidationRules = [
     })
 ];
 
+// Règles complètes pour l'inscription
+const fullRegisterValidationRules = [
+  ...registerValidationRules,
+  ...passwordConfirmValidationRule
+];
+
 // Règles de validation pour la connexion
 const loginValidationRules = [
   body('email')
     .trim()
     .notEmpty().withMessage('L\'email est requis')
     .isEmail().withMessage('Veuillez fournir un email valide')
-    .normalizeEmail(),
+    .normalizeEmail({ gmail_remove_dots: false }),
   
   body('password')
     .notEmpty().withMessage('Le mot de passe est requis')
@@ -84,7 +98,7 @@ const updateProfileValidationRules = [
     .optional()
     .trim()
     .isEmail().withMessage('Veuillez fournir un email valide')
-    .normalizeEmail()
+    .normalizeEmail({ gmail_remove_dots: false })
 ];
 
 // Règles de validation pour la mise à jour du mot de passe
@@ -115,7 +129,7 @@ const updatePasswordValidationRules = [
 
 module.exports = {
   validationMiddleware,
-  registerValidationRules,
+  registerValidationRules: fullRegisterValidationRules,
   loginValidationRules,
   resetPasswordValidationRules,
   updateProfileValidationRules,

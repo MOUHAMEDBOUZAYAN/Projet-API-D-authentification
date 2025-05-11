@@ -32,7 +32,7 @@ exports.register = asyncHandler(async (req, res, next) => {
     // Options du cookie
     const options = {
       expires: new Date(
-        Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000 // conversion en ms
+        Date.now() + parseInt(process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000 // conversion en ms
       ),
       httpOnly: true
     };
@@ -43,7 +43,8 @@ exports.register = asyncHandler(async (req, res, next) => {
     }
 
     // Créer la session si activée
-    if (process.env.USE_SESSION === 'true' && req.session) {
+    const useSession = process.env.USE_SESSION === 'true';
+    if (useSession && req.session) {
       req.session.userId = user._id;
     }
 
@@ -100,7 +101,7 @@ exports.login = asyncHandler(async (req, res, next) => {
     // Options du cookie
     const options = {
       expires: new Date(
-        Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
+        Date.now() + parseInt(process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
       ),
       httpOnly: true
     };
@@ -111,7 +112,8 @@ exports.login = asyncHandler(async (req, res, next) => {
     }
 
     // Créer la session si activée
-    if (process.env.USE_SESSION === 'true' && req.session) {
+    const useSession = process.env.USE_SESSION === 'true';
+    if (useSession && req.session) {
       req.session.userId = user._id;
     }
 
@@ -216,7 +218,7 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
   // Options du cookie
   const options = {
     expires: new Date(
-      Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
+      Date.now() + parseInt(process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
     ),
     httpOnly: true
   };
@@ -328,7 +330,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   // Options du cookie
   const options = {
     expires: new Date(
-      Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
+      Date.now() + parseInt(process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
     ),
     httpOnly: true
   };

@@ -28,7 +28,7 @@ const {
   validationMiddleware
 } = require('../middlewares/validator');
 
-// Routes publiques
+// Routes publiques - Application des règles de validation avant le contrôleur
 router.post('/register', registerValidationRules, validationMiddleware, register);
 router.post('/login', loginValidationRules, validationMiddleware, login);
 router.post('/forgotpassword', forgotPassword);
@@ -43,6 +43,6 @@ router.put('/updatepassword', updatePasswordValidationRules, validationMiddlewar
 router.get('/status', getAccountStatus);
 
 // Routes admin seulement
-router.use('/unlock/:userId', authorize('admin'), unlockAccount);
+router.put('/unlock/:userId', authorize('admin'), unlockAccount);
 
 module.exports = router;

@@ -9,7 +9,8 @@ const checkEnv = () => {
       'JWT_SECRET',
       'JWT_EXPIRE',
       'SESSION_SECRET',
-      'SESSION_EXPIRE'
+      'SESSION_EXPIRE',
+      'USE_SESSION'
     ];
   
     const missingEnvVars = requiredEnvVars.filter(env => !process.env[env]);
