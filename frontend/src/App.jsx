@@ -5,6 +5,7 @@ import { AnimatePresence } from 'framer-motion'
 // Layouts
 import MainLayout from './layouts/MainLayout'
 import AuthLayout from './layouts/AuthLayout'
+import DashboardLayout from './layouts/DashboardLayout'
 
 // Pages
 import Home from './pages/Home'
@@ -14,6 +15,10 @@ import ForgotPassword from './pages/auth/ForgotPassword'
 import ResetPassword from './pages/auth/ResetPassword'
 import Profile from './pages/profile/Profile'
 import NotFound from './pages/NotFound'
+
+// Dashboard Pages
+import UserDashboard from './pages/dashboard/UserDashboard'
+import AdminDashboard from './pages/dashboard/AdminDashboard'
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute'
@@ -59,8 +64,16 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Route>
 
-        {/* Routes protégées avec MainLayout */}
-        <Route element={<MainLayout />}>
+        {/* Routes protégées utilisateur */}
+        <Route element={<DashboardLayout />}>
+          <Route 
+            path="/user/dashboard" 
+            element={
+              <ProtectedRoute>
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route 
             path="/profile" 
             element={
@@ -68,6 +81,36 @@ function App() {
                 <Profile />
               </ProtectedRoute>
             } 
+          />
+        </Route>
+
+        {/* Routes protégées administrateur */}
+        <Route element={<DashboardLayout />}>
+          <Route 
+            path="/admin/dashboard" 
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/admin/users" 
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <AdminDashboard />
+                {/* Remplacer par votre composant de gestion des utilisateurs une fois créé */}
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/admin/settings" 
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <AdminDashboard />
+                {/* Remplacer par votre composant de paramètres système une fois créé */}
+              </ProtectedRoute>
+            }
           />
         </Route>
       </Routes>

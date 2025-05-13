@@ -54,7 +54,11 @@ const passwordConfirmValidationRule = [
 // Règles complètes pour l'inscription
 const fullRegisterValidationRules = [
   ...registerValidationRules,
-  ...passwordConfirmValidationRule
+  ...passwordConfirmValidationRule,
+  // Règle pour valider le rôle
+  body('role')
+    .optional()
+    .isIn(['user', 'admin']).withMessage('Le rôle doit être "user" ou "admin"')
 ];
 
 // Règles de validation pour la connexion

@@ -1,11 +1,11 @@
 // pages/dashboard/UserDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
 import { useAuthStore } from '../../store/authStore';
+import axios from '../../config/axiosConfig'; // Importer la configuration axios correcte
 
 const UserDashboard = () => {
-  const { user, token } = useAuthStore();
+  const { user } = useAuthStore(); // Pas besoin de token car il est géré par axiosConfig
   const [accountInfo, setAccountInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,24 +13,22 @@ const UserDashboard = () => {
   useEffect(() => {
     const fetchAccountData = async () => {
       try {
-        const config = {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        };
+        setLoading(true);
+        setError(null);
 
-        const response = await axios.get('/api/auth/status', config);
+        // Utiliser la configuration axios correcte
+        const response = await axios.get('/api/auth/status');
         setAccountInfo(response.data.data);
         setLoading(false);
       } catch (err) {
         console.error('Erreur lors du chargement des informations du compte:', err);
-        setError('Une erreur est survenue lors du chargement des données.');
+        setError('Une erreur est survenue lors du chargement des données. Veuillez réessayer ultérieurement.');
         setLoading(false);
       }
     };
 
     fetchAccountData();
-  }, [token]);
+  }, []); // Suppression de la dépendance token car géré par axiosConfig
 
   if (loading) {
     return (
@@ -44,6 +42,12 @@ const UserDashboard = () => {
     return (
       <div className="bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-4 rounded-lg">
         <p>{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Réessayer
+        </button>
       </div>
     );
   }

@@ -1,8 +1,8 @@
 // models/User.js
-// Modèle d'utilisateur pour MongoDB
+// Modèle utilisateur
 
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 

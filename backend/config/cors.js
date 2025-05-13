@@ -2,10 +2,11 @@
 // Configuration des options CORS pour l'API
 
 module.exports = {
-    origin: process.env.CORS_ORIGIN || '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    credentials: true,
-    exposedHeaders: ['X-Total-Count'],
-    maxAge: 86400 // 24 heures en secondes
-  };
+  // Accepter toutes les origines en mode développement
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept'],
+  credentials: true,
+  exposedHeaders: ['X-Total-Count', 'Content-Length', 'Content-Type'],
+  maxAge: 86400 // 24 heures en secondes
+};

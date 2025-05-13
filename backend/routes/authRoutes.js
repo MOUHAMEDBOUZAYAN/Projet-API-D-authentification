@@ -1,6 +1,6 @@
 // routes/authRoutes.js
 // Routes pour l'authentification
-
+const Shema = require('../models/User')
 const express = require('express');
 const router = express.Router();
 const {
@@ -28,8 +28,16 @@ const {
   validationMiddleware
 } = require('../middlewares/validator');
 
+// Ajout d'un middleware de log pour déboguer les requêtes d'inscription
+router.post('/register', (req, res, next) => {
+  console.log('Requête d\'inscription reçue:', {
+    body: { ...req.body, password: '[MASQUÉ]', passwordConfirm: '[MASQUÉ]' },
+    headers: req.headers
+  });
+  next();
+}, registerValidationRules, validationMiddleware, register);
+
 // Routes publiques - Application des règles de validation avant le contrôleur
-router.post('/register', registerValidationRules, validationMiddleware, register);
 router.post('/login', loginValidationRules, validationMiddleware, login);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resettoken', resetPasswordValidationRules, validationMiddleware, resetPassword);
@@ -44,5 +52,10 @@ router.get('/status', getAccountStatus);
 
 // Routes admin seulement
 router.put('/unlock/:userId', authorize('admin'), unlockAccount);
+
+
+
+
+
 
 module.exports = router;

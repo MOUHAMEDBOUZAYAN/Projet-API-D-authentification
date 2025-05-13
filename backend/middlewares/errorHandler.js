@@ -8,7 +8,7 @@ const errorHandler = (err, req, res, next) => {
   error.message = err.message;
 
   // Log pour le développeur
-  console.error(err);
+  console.error('ERREUR DÉTAILLÉE:', err);
 
   // Erreur de validation de Mongoose (champs requis)
   if (err.name === 'ValidationError') {

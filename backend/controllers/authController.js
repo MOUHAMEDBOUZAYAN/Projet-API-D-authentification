@@ -1,5 +1,4 @@
 // controllers/authController.js
-// Contrôleurs pour les opérations d'authentification
 
 const crypto = require('crypto');
 const User = require('../models/User');
@@ -10,7 +9,13 @@ const asyncHandler = require('../middlewares/asyncHandler');
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = asyncHandler(async (req, res, next) => {
-  const { name, email, password } = req.body;
+  // Extraire toutes les données du corps de la requête
+  const { name, email, password, passwordConfirm, role } = req.body;
+
+  // Vérifier si les mots de passe correspondent
+  if (password !== passwordConfirm) {
+    return next(new ErrorResponse('La confirmation du mot de passe est requise, Les mots de passe ne correspondent pas', 400));
+  }
 
   try {
     // Vérifier si l'utilisateur existe déjà
@@ -19,12 +24,36 @@ exports.register = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse('Cet email est déjà utilisé', 400));
     }
 
-    // Créer un nouvel utilisateur
-    const user = await User.create({
+    // Créer un nouvel utilisateur avec le rôle spécifié
+    const userData = {
       name,
       email,
       password
+    };
+
+    // Vérifier si le rôle est spécifié et l'ajouter à l'objet userData
+    // S'assurer que le rôle 'admin' est accepté
+    if (role && (role === 'admin' || role === 'user')) {
+      userData.role = role;
+      console.log(`Création d'un utilisateur avec le rôle spécifié: ${role}`);
+    } else {
+      console.log('Aucun rôle spécifié ou rôle invalide, utilisation du rôle par défaut: user');
+    }
+
+    // Log pour debug
+    console.log('Création d\'un nouvel utilisateur avec les données:', {
+      name,
+      email,
+      role: userData.role || 'user (par défaut)',
+      passwordProvided: !!password,
+      passwordConfirmProvided: !!passwordConfirm
     });
+
+    // Créer l'utilisateur
+    const user = await User.create(userData);
+
+    // Vérifier que le rôle a été correctement sauvegardé
+    console.log(`Utilisateur créé avec le rôle: ${user.role}`);
 
     // Envoyer le token dans la réponse
     const token = user.getSignedJwtToken();
@@ -48,11 +77,25 @@ exports.register = asyncHandler(async (req, res, next) => {
       req.session.userId = user._id;
     }
 
+    // Répondre avec l'utilisateur créé
+    console.log('Utilisateur créé avec succès:', {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+
     res.status(201)
       .cookie('token', token, options)
       .json({
         success: true,
-        token
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
       });
   } catch (error) {
     console.error('Erreur d\'inscription:', error);
@@ -117,11 +160,25 @@ exports.login = asyncHandler(async (req, res, next) => {
       req.session.userId = user._id;
     }
 
+    // Console log pour le debug
+    console.log('Utilisateur connecté:', {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+
     res.status(200)
       .cookie('token', token, options)
       .json({
         success: true,
-        token
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
       });
   } catch (error) {
     console.error('Erreur de connexion:', error);
@@ -154,6 +211,14 @@ exports.logout = asyncHandler(async (req, res, next) => {
 // @route   GET /api/auth/me
 // @access  Private
 exports.getMe = asyncHandler(async (req, res, next) => {
+  // Ajouter des logs pour le debug
+  console.log('Utilisateur récupéré:', {
+    id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    role: req.user.role
+  });
+
   res.status(200).json({
     success: true,
     data: req.user
@@ -265,16 +330,6 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   `;
 
   try {
-    // Cette partie dépend de votre implémentation de sendEmail
-    // Vous pourriez avoir besoin d'adapter cette section
-    /*
-    await sendEmail({
-      email: user.email,
-      subject: 'Réinitialisation de mot de passe',
-      message
-    });
-    */
-    
     // Pour ce test, on va simplement simuler l'envoi d'email
     console.log('Email de réinitialisation envoyé à:', user.email);
     console.log('URL de réinitialisation:', resetUrl);

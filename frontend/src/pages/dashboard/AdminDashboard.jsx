@@ -1,11 +1,11 @@
 // pages/dashboard/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
 import { useAuthStore } from '../../store/authStore';
+import axios from '../../config/axiosConfig'; // Importer la configuration axios
 
 const AdminDashboard = () => {
-  const { user, token } = useAuthStore();
+  const { user } = useAuthStore(); // Pas besoin de token car il est géré par axiosConfig
   const [stats, setStats] = useState({
     totalUsers: 0,
     adminUsers: 0,
@@ -19,16 +19,10 @@ const AdminDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        setError(null); // Réinitialiser l'erreur au début
         
-        // Configuration pour les requêtes API
-        const config = {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        };
-        
-        // Récupérer les utilisateurs
-        const response = await axios.get('/api/users', config);
+        // Utiliser la configuration axios correcte sans spécifier manuellement les headers
+        const response = await axios.get('/api/users');
         
         if (response.data.success) {
           const users = response.data.data;
@@ -54,23 +48,18 @@ const AdminDashboard = () => {
         setLoading(false);
       } catch (err) {
         console.error('Erreur lors du chargement des données du tableau de bord:', err);
-        setError('Une erreur est survenue lors du chargement des données.');
+        setError('Une erreur est survenue lors du chargement des données. Veuillez réessayer ultérieurement.');
         setLoading(false);
       }
     };
     
     fetchDashboardData();
-  }, [token]);
+  }, []); // Suppression de la dépendance token car géré par axiosConfig
   
   const handleUnlockAccount = async (userId) => {
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      };
-      
-      await axios.put(`/api/auth/unlock/${userId}`, {}, config);
+      // Utiliser la configuration axios correcte
+      await axios.put(`/api/auth/unlock/${userId}`, {});
       
       // Mettre à jour la liste des utilisateurs
       const updatedUsers = recentUsers.map(user => 
@@ -103,6 +92,12 @@ const AdminDashboard = () => {
     return (
       <div className="bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-4 rounded-lg">
         <p>{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Réessayer
+        </button>
       </div>
     );
   }
