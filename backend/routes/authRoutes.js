@@ -1,6 +1,6 @@
 // routes/authRoutes.js
 // Routes pour l'authentification
-const Shema = require('../models/User')
+
 const express = require('express');
 const router = express.Router();
 const {
